@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Our Little Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Playfair+Display:ital,wght@0,600;1,500&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: tender, warm, a little playful — a love letter, not a website.
+   IDEA: a cloth-bound scrapbook album; each memory is one open spread.
+   PICTURE: the open book itself — taped polaroid left, handwritten story right.
+   COLOUR and TYPE: wine cloth cover, blush table, paper pages, gold foil; Playfair titles, Caveat handwriting, Nunito body.
+   LAYOUT: cover first; tap to open; one spread per memory; stacks to one page on phones. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#f4d8de,#24101a);--ink:light-dark(#3a1724,#f6e6ea);
+  --cloth:#6b1836;--cloth2:#4c0f25;--gold:#e0b25c;--paper:#fffaf3;--paper2:#f7eee2;--pink:#e86a8e;--text:#3a1724;--soft:#7d5563}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Nunito,system-ui,sans-serif;overflow-x:clip;min-height:100vh;
+  background-image:radial-gradient(circle at 15% 10%,light-dark(#fbe7ec,#3a1726) 0,transparent 45%),radial-gradient(circle at 90% 90%,light-dark(#efc7d1,#1a0a12) 0,transparent 50%)}
+main{max-width:1180px;margin:0 auto;padding:clamp(16px,4vw,48px) max(4vw,12px) 40px}
+h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;line-height:1.05;text-wrap:balance;margin:0}
+.hand{font-family:Caveat,cursive}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* Cover */
+.cover{position:relative;margin:0 auto;max-width:560px;aspect-ratio:3/4;border-radius:10px 18px 18px 10px;
+  background:linear-gradient(135deg,var(--cloth),var(--cloth2));color:#fbe7c6;display:grid;place-items:center;text-align:center;padding:40px 28px;
+  box-shadow:inset 14px 0 0 rgba(0,0,0,.18),inset 16px 0 0 rgba(255,255,255,.06),0 30px 60px -20px rgba(60,10,30,.55),0 8px 18px rgba(60,10,30,.25);border:0;width:100%}
+.cover::before{content:"";position:absolute;inset:22px 22px 22px 36px;border:1.5px solid rgba(224,178,92,.55);border-radius:6px;pointer-events:none}
+.cover h1{font-size:clamp(36px,7vw,52px);color:var(--gold);font-style:italic;font-weight:500}
+.cover .names{font-family:Caveat,cursive;font-size:clamp(26px,5vw,34px);margin:14px 0 4px}
+.cover .since{font-size:14px;letter-spacing:.02em;opacity:.85}
+.cover .count{margin:26px auto 0;padding:12px 20px;border:1px solid rgba(224,178,92,.5);border-radius:999px;font-size:15px;display:inline-block}
+.cover .count b{font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}
+.cover .open{margin-top:28px;font-family:Caveat,cursive;font-size:24px;color:#fff;opacity:.9;animation:bob 2.4s ease-in-out infinite}
+.cover svg{width:72px;height:64px;margin:0 auto 18px;display:block}
+@keyframes bob{50%{transform:translateY(-5px)}}
+
+/* Book */
+.book{display:none}
+.opened .cover{display:none}.opened .book{display:block}
+.spread{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--paper);border-radius:6px;
+  box-shadow:0 0 0 8px var(--cloth),0 0 0 10px var(--cloth2),0 34px 60px -24px rgba(60,10,30,.6);min-height:min(78vh,640px);perspective:1800px}
+.spread::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:60px;transform:translateX(-50%);pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(110,60,40,.13) 45%,rgba(110,60,40,.2) 50%,rgba(110,60,40,.13) 55%,transparent)}
+.page{padding:clamp(24px,4vw,52px);position:relative;background:linear-gradient(var(--paper),var(--paper2))}
+.page.l{border-radius:6px 0 0 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.stack{position:relative;width:min(100%,380px);cursor:pointer;border:0;background:none;padding:0;display:block}
+.stack.multi::before,.stack.multi::after{content:"";position:absolute;inset:0;background:#fff;box-shadow:0 6px 16px -8px rgba(60,20,30,.35)}
+.stack.multi::before{transform:rotate(4deg) translate(8px,4px)}.stack.multi::after{transform:rotate(-1deg) translate(-6px,6px)}
+.stack .polaroid{z-index:1;width:100%}
+.ph img{transition:opacity .35s}.ph img.fade{opacity:0}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:380px}
+.thumbs button{width:44px;height:44px;padding:0;border:2px solid transparent;border-radius:6px;overflow:hidden;background:#eee;opacity:.6}
+.thumbs button[aria-current=true]{border-color:var(--pink);opacity:1}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.hint{font-family:Caveat,cursive;font-size:20px;color:var(--soft);margin:-10px 0 0}
+.page.r{border-radius:0 6px 6px 0;display:flex;flex-direction:column;justify-content:center;color:var(--text);transform-origin:left center}
+.turn .page.r{animation:turn .7s cubic-bezier(.3,.7,.3,1)}
+.turnback .page.l{animation:turnb .7s cubic-bezier(.3,.7,.3,1);transform-origin:right center}
+@keyframes turn{from{transform:rotateY(-80deg);opacity:.2}to{transform:none;opacity:1}}
+@keyframes turnb{from{transform:rotateY(80deg);opacity:.2}to{transform:none;opacity:1}}
+
+.polaroid{position:relative;background:#fff;padding:14px 14px 58px;box-shadow:0 14px 28px -10px rgba(60,20,30,.4),0 2px 6px rgba(60,20,30,.15);
+  width:min(100%,380px);transform:rotate(var(--tilt,-2.5deg))}
+.polaroid .ph{aspect-ratio:4/5;overflow:hidden;background:#eee;display:grid;place-items:center}
+.polaroid img{width:100%;height:100%;object-fit:cover;display:block}.polaroid img.contain{object-fit:contain;background:#dfe6ea}
+.polaroid .cap{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-family:Caveat,cursive;font-size:24px;color:#4a2030;line-height:1.1;padding:0 12px}
+.tape{position:absolute;width:96px;height:28px;background:rgba(240,200,140,.55);top:-12px;left:50%;transform:translateX(-50%) rotate(-4deg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+.date{font-size:14px;color:var(--soft);font-weight:600;white-space:nowrap}
+.page.r h2{font-size:clamp(30px,4vw,44px);margin:6px 0 18px;color:var(--cloth)}
+.story{font-size:17px;max-width:42ch;margin:0}
+.note{margin-top:24px;font-family:Caveat,cursive;font-size:clamp(26px,3vw,32px);color:var(--pink);line-height:1.15;display:flex;gap:10px;align-items:flex-start}
+.note svg{flex:none;width:26px;height:24px;margin-top:6px}
+.pno{position:absolute;bottom:16px;font-size:13px;color:var(--soft)}
+.page.l .pno{left:24px}.page.r .pno{right:24px}
+
+.end{grid-column:1/-1;display:grid;place-items:center;text-align:center;padding:48px 24px;color:var(--text)}
+.end h2{font-size:clamp(34px,5vw,50px);color:var(--cloth);font-style:italic;font-weight:500}
+.end p{font-size:18px;max-width:44ch;margin:18px auto}
+.end .hand{font-size:34px;color:var(--pink)}
+
+.nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:34px;flex-wrap:wrap}
+.btn{min-width:44px;min-height:44px;padding:10px 20px;border-radius:999px;border:0;background:var(--cloth);color:#fbe7c6;font-weight:600}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid currentColor;opacity:.75}
+.dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.dots button{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;padding:0}
+.dots button::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--ink);opacity:.25;transition:.2s}
+.dots button[aria-current=true]::after{opacity:1;background:var(--pink);transform:scale(1.3)}
+.sample{text-align:center;font-size:13px;opacity:.7;margin-top:18px}
+
+@media(max-width:760px){
+  .spread{grid-template-columns:minmax(0,1fr);min-height:0}
+  .spread::after{display:none}
+  .page.l{border-radius:6px 6px 0 0;padding-top:36px;padding-bottom:12px}
+  .page.r{border-radius:0 0 6px 6px;padding-top:12px}
+  .page.l .pno{display:none}
+  .turn .page.r,.turnback .page.l{animation:fade .5s ease}
+  .turn .page.l,.turnback .page.r{animation:fade .5s ease}
+}
+@media(max-width:600px){.dots{order:3;width:100%}.dots button{width:30px;height:36px}}
+@keyframes fade{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<main id="app">
+  <button class="cover" id="cover" aria-label="Open the album">
+    <div>
+      <svg viewBox="0 0 72 64" aria-hidden="true"><path d="M36 60S4 40 4 20A16 16 0 0 1 36 12a16 16 0 0 1 32 8c0 20-32 40-32 40z" fill="none" stroke="#e0b25c" stroke-width="2.5"/><path d="M36 48S14 34 14 21a9 9 0 0 1 22-4 9 9 0 0 1 22 4c0 13-22 27-22 27z" fill="#e86a8e" opacity=".85"/></svg>
+      <h1 id="title">Our Little Book of Us</h1>
+      <div class="names" id="names"></div>
+      <div class="since" id="since"></div>
+      <div class="count" id="count"></div>
+      <div class="open">open me, Dollface ♡</div>
+    </div>
+  </button>
+
+  <section class="book" aria-live="polite">
+    <div class="spread" id="spread"></div>
+    <nav class="nav" aria-label="Album pages">
+      <button class="btn ghost" id="prev">← Back</button>
+      <div class="dots" id="dots"></div>
+      <button class="btn" id="next">Next →</button>
+    </nav>
+  </section>
+</main>
+
+<script>
+{
+/* ===== Everything personal lives here ===== */
+const ALBUM = {
+  title: "Our Little Book of Us",
+  you: "Tendai",
+  her: "Dollface",
+  together: "2025-11-20",
+  closing: "One year ago today, you became mine and I became yours. Thank you for the laughs, the patience (especially when I'm late), and every little moment in between. This book isn't finished — we've only filled the first chapter.",
+  signoff: "Happy anniversary, Dollface — always yours, Tendai"
+};
+const P = n => `photos/p${String(n).padStart(2,"0")}.jpg`;
+
+const I = n => `photos/i${String(n).padStart(2,"0")}.jpg`;
+const MEMORIES = [
+  {when:"3 October 2025", title:"Where it all started",
+   story:"I replied to your story and asked if you were coming to the all-night hanty. You gave me live updates while I was stuck at work till four — “kwasara machairs ekumashure.” Only the back seats were left. Turns out the best seat in the house was always going to be next to you.",
+   note:"Best reply I ever sent.",
+   photos:[{src:P(1),cap:"only the back seats left… worth it",fit:"contain"}]},
+  {when:"", title:"Our first meet-up",
+   story:"The day the texts became real life. You in that denim jacket, me pretending to be calm, both of us smiling like we'd known each other for years.",
+   note:"Calm? Me? Not even a little.",
+   photos:[{src:P(2),cap:"first selfie, first butterflies"}]},
+  {when:"", title:"Hangouts",
+   story:"Lazy afternoons, a mirror that has definitely seen better days, and the two of us making the most ordinary days feel like something. Nothing fancy — and somehow these are the moments I replay the most.",
+   note:"Anywhere is a good place if you're there.",
+   photos:[{src:P(3),cap:"peace signs & proud faces"},{src:P(4),cap:"dusty mirror, flawless us"},{src:P(5),cap:"my favourite place: right here"}]},
+  {when:"13 December 2025", title:"Our first date: movie night",
+   story:"Our very first date, and I showed up late. You made sure I knew it — that look could stop traffic. The funny part? We'd somehow matched in brown sweaters without planning it. By the kissing booth you'd forgiven me. Consider this my official apology — in writing, on the internet, forever.",
+   note:"Still worth the wait though… right?",
+   photos:[{src:P(6),cap:"the “you're late” face"},{src:P(7),cap:"matching sweaters, mismatched moods"},{src:I(11),cap:"kissing booth = apology accepted"}]},
+  {when:"30 January 2026", title:"Second date: Spur",
+   story:"Spur, and the girl had an appetite 😂 — I loved every second of it. Then a wander around Village Walk with big eyes, silly faces and upside-down selfies, me trying very hard not to stare at you the whole time. I failed.",
+   note:"Next time I'm ordering two. One is mine.",
+   photos:[{src:P(8),cap:"certified goofballs"},{src:P(10),cap:"full tummy, full heart"},{src:P(9),cap:"new angle, same cutie",pos:"50% 20%"},
+           {src:I(14),cap:"upside down, still head over heels"},{src:I(5),cap:"sleepy, sunny, mine"}]},
+  {when:"13 February 2026", title:"Third date: our Valentine's",
+   story:"We did Valentine's a day early. Flowers in one hand, ice cream in the other, and my cap on your head by the end of it. Watching you demolish that cone was the highlight of my week.",
+   note:"Be my valentine every year?",
+   photos:[{src:P(16),cap:"came for the date, stayed for dessert"},{src:I(17),cap:"flowers for my flower"},{src:P(11),cap:"she liked the bouquet (and me)"},
+           {src:P(12),cap:"Braves cap, brave heart"},{src:P(13),cap:"pout patrol"},{src:I(15),cap:"hide & seek champion"}]},
+  {when:"2 May 2026", title:"Fourth date: dinner & Gweru",
+   story:"Dinner under the woven lamps, you laughing behind your hands at my jokes, and a late night in Gweru that ended with you right here, smiling into my neck.",
+   note:"My favourite sound is your laugh.",
+   photos:[{src:P(15),cap:"dressed up & loved up",pos:"50% 30%"},{src:P(14),cap:"close enough to count lashes"},{src:I(22),cap:"caught you laughing"},{src:I(24),cap:"Gweru nights, cosy hearts"}]},
+  {when:"9 May 2026", title:"Poolside & welcoming Forgie",
+   story:"Sunshine, a pool with a view of the city, a bouquet almost as big as you, and the day we welcomed our first kid: Forgie, the big pink bear. I don't think I stopped smiling once.",
+   note:"Proud parents of one very fluffy baby.",
+   photos:[{src:P(19),cap:"sealed with a kiss"},{src:P(18),cap:"that scrunchy smile"},{src:I(25),cap:"poolside & pretty"},{src:P(20),cap:"sunshine & my sunshine"},
+           {src:P(17),cap:"main character energy"},{src:P(26),cap:"welcome to the family, Forgie"},{src:I(8),cap:"mama & Forgie, my two favourites"}]},
+  {when:"27 June 2026", title:"The Country Club",
+   story:"You in that brown dress, me trying to keep up. Car-ride selfies on the way, mirror selfies on arrival, and a dinner where the wine was good and the company was better.",
+   note:"Let's never stop dating each other.",
+   photos:[{src:P(22),cap:"passenger princess, certified"},{src:P(25),cap:"getting ready? say less"},{src:P(24),cap:"date night, best view in the room"},{src:P(23),cap:"me, pretending to know about wine"}]},
+  {when:"July 2026", title:"Cheers to us",
+   story:"Another dinner, another toast — to us, to everything so far, and to everything still coming. And a week later I found myself all over your lock screen.",
+   note:"Lock screen status: unlocked my heart.",
+   photos:[{src:I(9),cap:"cheers to us, always"},{src:I(4),cap:"your glass, my view"},{src:I(7),cap:"made it onto your lock screen ♡",fit:"contain"}]},
+  {when:"17 August 2026", title:"Couch nights",
+   story:"A full plate, a warm blanket and our people around us. The cosy nights count just as much as the fancy ones.",
+   note:"Home is wherever you're sitting.",
+   photos:[{src:P(21),cap:"plates full, hearts fuller"},{src:I(10),cap:"squad goals, blanket edition"}]}
+];
+
+/* ===== Rendering ===== */
+const $ = id => document.getElementById(id);
+const fmt = d => new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const heart = '<svg viewBox="0 0 26 24" aria-hidden="true"><path d="M13 22S1 14.5 1 7A6 6 0 0 1 13 4a6 6 0 0 1 12 3c0 7.5-12 15-12 15z" fill="#e86a8e"/></svg>';
+
+document.title = ALBUM.title;
+$("title").textContent = ALBUM.title;
+$("names").textContent = `${ALBUM.you} & ${ALBUM.her}`;
+$("since").textContent = `together since ${fmt(ALBUM.together)}`;
+const days = Math.max(0, Math.floor((Date.now() - new Date(ALBUM.together+"T00:00:00")) / 864e5));
+$("count").innerHTML = `<b>${days.toLocaleString()}</b> days of us`;
+
+const total = MEMORIES.length + 1;
+let cur = 0;
+
+let pi = 0;
+function showPhoto(i, animate){
+  const m = MEMORIES[cur]; if (!m) return;
+  pi = (i + m.photos.length) % m.photos.length;
+  const p = m.photos[pi], img = $("ph");
+  const set = () => { img.src = p.src; img.className = p.fit === "contain" ? "contain" : "";
+    img.style.objectPosition = p.pos || "50% 40%"; img.alt = p.cap; $("cap").textContent = p.cap; };
+  if (animate){ img.classList.add("fade"); setTimeout(()=>{ set(); requestAnimationFrame(()=>img.classList.remove("fade")); }, 200); } else set();
+  document.querySelectorAll("#thumbs button").forEach((b,k)=>b.setAttribute("aria-current", k===pi));
+}
+function render(dir){
+  const s = $("spread");
+  if (cur < MEMORIES.length){
+    const m = MEMORIES[cur], tilt = (cur % 2 ? 2.5 : -2.5) + "deg", many = m.photos.length > 1;
+    s.innerHTML = `
+      <div class="page l">
+        <button class="stack${many?" multi":""}" id="stack" aria-label="${many?"Next photo":esc(m.title)}">
+          <figure class="polaroid" style="--tilt:${tilt};margin:0"><span class="tape"></span>
+            <div class="ph"><img id="ph" alt=""></div><figcaption class="cap" id="cap"></figcaption></figure>
+        </button>
+        ${many ? `<p class="hint">tap the photo for more ♡</p><div class="thumbs" id="thumbs">${m.photos.map((p,i)=>
+          `<button data-p="${i}" aria-label="Photo ${i+1}"><img src="${esc(p.src)}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
+        <span class="pno">${cur*2+1}</span>
+      </div>
+      <div class="page r">
+        ${m.when ? `<span class="date">${esc(m.when)}</span>` : ""}
+        <h2>${esc(m.title)}</h2>
+        <p class="story">${esc(m.story)}</p>
+        <div class="note">${heart}<span>${esc(m.note)}</span></div>
+        <span class="pno">${cur*2+2}</span>
+      </div>`;
+  } else {
+    s.innerHTML = `<div class="end"><div>
+      <h2>To be continued…</h2>
+      <p>${esc(ALBUM.closing)}</p>
+      <div class="hand">${esc(ALBUM.signoff)}</div></div></div>`;
+  }
+  if (cur < MEMORIES.length){ showPhoto(0,false);
+    $("stack").addEventListener("click", () => showPhoto(pi+1,true));
+    const t = $("thumbs"); if (t) t.addEventListener("click", e => { const b = e.target.closest("button"); if (b) showPhoto(+b.dataset.p,true); });
+    const nx = MEMORIES[cur+1]; if (nx) nx.photos.forEach(p => { const im = new Image(); im.src = p.src; }); }
+  s.classList.remove("turn","turnback"); void s.offsetWidth;
+  if (dir) s.classList.add(dir > 0 ? "turn" : "turnback");
+  $("prev").disabled = false;
+  $("prev").textContent = cur === 0 ? "← Cover" : "← Back";
+  $("next").disabled = cur === total - 1;
+  $("dots").innerHTML = Array.from({length: total}, (_, i) =>
+    `<button aria-label="Page ${i+1}" aria-current="${i===cur}" data-i="${i}"></button>`).join("");
+}
+
+const go = i => { if (i < 0){ document.body.classList.remove("opened"); $("cover").focus(); return; }
+  if (i >= total) return; const d = i - cur; cur = i; render(d); };
+
+$("cover").addEventListener("click", () => { document.body.classList.add("opened"); cur = 0; render(1); $("next").focus(); });
+$("prev").addEventListener("click", () => go(cur - 1));
+$("next").addEventListener("click", () => go(cur + 1));
+$("dots").addEventListener("click", e => { const b = e.target.closest("button"); if (b) go(+b.dataset.i); });
+document.addEventListener("keydown", e => {
+  if (!document.body.classList.contains("opened")) return;
+  if (e.key === "ArrowRight") go(cur + 1);
+  if (e.key === "ArrowLeft") go(cur - 1);
+});
+let sx = null;
+$("spread").addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, {passive:true});
+$("spread").addEventListener("touchend", e => {
+  if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+});
+}
+</script>
+</body>
+</html>
