@@ -113,6 +113,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   .turn .page.l,.turnback .page.r{animation:fade .5s ease}
 }
 @media(max-width:600px){.dots{order:3;width:100%}.dots button{width:30px;height:36px}}
+.offline{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:var(--cloth);color:#fbe7c6;font-size:13px;padding:8px 14px;border-radius:999px;box-shadow:0 6px 18px rgba(60,10,30,.3);
+  white-space:nowrap;z-index:5;transition:opacity .6s}
+.offline.done{opacity:0;pointer-events:none}
 @keyframes fade{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
@@ -204,6 +208,8 @@ const MEMORIES = [
    photos:[{src:P(21),cap:"plates full, hearts fuller"},{src:I(10),cap:"squad goals, blanket edition"}]}
 ];
 
+window.MEMORIES = MEMORIES; // shared with the offline saver below
+
 /* ===== Rendering ===== */
 const $ = id => document.getElementById(id);
 const fmt = d => new Date(d+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
@@ -291,10 +297,38 @@ $("spread").addEventListener("touchend", e => {
 }
 </script>
 
+<div class="offline" id="offline" hidden></div>
 <script>
-/* Save the album for offline use (works on the GitHub Pages site; ignored where not allowed). */
-try { if ("serviceWorker" in navigator && location.protocol === "https:")
-  navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
+/* ===== Offline saving =====
+   Registers the service worker, then saves every album photo into the same cache,
+   one at a time. Already-saved photos are skipped, so an interrupted save resumes. */
+{
+  const CACHE = "our-little-book-v2";
+  const pill = document.getElementById("offline");
+  const show = (t, done) => { pill.hidden = false; pill.textContent = t; pill.classList.toggle("done", !!done); };
+
+  async function saveForOffline() {
+    if (!("serviceWorker" in navigator) || !("caches" in window) || !(location.protocol === "https:" || location.hostname === "127.0.0.1")) return;
+    try {
+      await navigator.serviceWorker.register("sw.js");
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      const urls = [...new Set(MEMORIES.flatMap(m => m.photos.map(p => p.src)))];
+      const cache = await caches.open(CACHE);
+      let saved = 0;
+      for (const u of urls) {
+        if (!(await cache.match(u))) {
+          if (!navigator.onLine) break;
+          show(`Saving for offline… ${saved}/${urls.length}`);
+          try { const r = await fetch(u, { cache: "reload" }); if (r.ok) await cache.put(u, r); } catch (e) { break; }
+        }
+        saved++;
+      }
+      if (saved === urls.length) { show("Saved for offline ♡"); setTimeout(() => show("Saved for offline ♡", true), 2500); }
+      else show(`Saved ${saved}/${urls.length} photos — open again online to finish`);
+    } catch (e) { /* offline saving not allowed here (e.g. inside a preview); the album still works online */ }
+  }
+  if (document.readyState === "complete") saveForOffline(); else addEventListener("load", saveForOffline);
+}
 </script>
 </body>
 </html>
