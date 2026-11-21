@@ -303,7 +303,7 @@ $("spread").addEventListener("touchend", e => {
    Registers the service worker, then saves every album photo into the same cache,
    one at a time. Already-saved photos are skipped, so an interrupted save resumes. */
 {
-  const CACHE = "our-little-book-v2";
+  const CACHE = "our-little-book-v3";
   const pill = document.getElementById("offline");
   const show = (t, done) => { pill.hidden = false; pill.textContent = t; pill.classList.toggle("done", !!done); };
 
@@ -311,9 +311,17 @@ $("spread").addEventListener("touchend", e => {
     if (!("serviceWorker" in navigator) || !("caches" in window) || !(location.protocol === "https:" || location.hostname === "127.0.0.1")) return;
     try {
       await navigator.serviceWorker.register("sw.js");
+      await navigator.serviceWorker.ready;
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-      const urls = [...new Set(MEMORIES.flatMap(m => m.photos.map(p => p.src)))];
       const cache = await caches.open(CACHE);
+      // Make sure the page itself is saved (this is what opens the app with no internet).
+      if (navigator.onLine) {
+        for (const u of ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-512.png"]) {
+          try { const r = await fetch(u, { cache: "reload" }); if (r.ok) await cache.put(u, new Response(await r.blob(), { headers: r.headers })); } catch (e) {}
+        }
+      }
+      const pageSaved = !!(await cache.match("index.html")) && !!(await cache.match("./"));
+      const urls = [...new Set(MEMORIES.flatMap(m => m.photos.map(p => p.src)))];
       let saved = 0;
       for (const u of urls) {
         if (!(await cache.match(u))) {
@@ -323,7 +331,7 @@ $("spread").addEventListener("touchend", e => {
         }
         saved++;
       }
-      if (saved === urls.length) { show("Saved for offline ♡"); setTimeout(() => show("Saved for offline ♡", true), 2500); }
+      if (saved === urls.length && pageSaved) { show("Saved for offline ♡"); setTimeout(() => show("Saved for offline ♡", true), 2500); }
       else show(`Saved ${saved}/${urls.length} photos — open again online to finish`);
     } catch (e) { /* offline saving not allowed here (e.g. inside a preview); the album still works online */ }
   }
